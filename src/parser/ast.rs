@@ -18,22 +18,65 @@ impl Node {
 #[derive(Debug, Clone)]
 pub enum GrammarItem {
     Integer(i32),
+    Symbol(String),
+    True,
+    False,
+    
+    NotEq,
+    Tuple,
+    
     Plus,
+    PlusPlus,
     Minus,
+    MinusMimus,
     Multiply,
     Divide,
+    
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
+    Not,
+    Eq,
     Root,
+    And,
+    Or,
+    
+    Let,
+    Fn,
+    If,
 }
 
 impl fmt::Display for GrammarItem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
             GrammarItem::Integer(i) => write!(f, "Integer: {}", i),
+            GrammarItem::Symbol(s) => write!(f, "Symbol: {}", s),
+            GrammarItem::True => write!(f, "true"),
+            GrammarItem::False => write!(f, "false"),
+
             GrammarItem::Plus => write!(f, "+"),
+            GrammarItem::PlusPlus => write!(f, "++"),
             GrammarItem::Minus => write!(f, "-"),
+            GrammarItem::MinusMimus => write!(f, "--"),
             GrammarItem::Multiply => write!(f, "*"),
             GrammarItem::Divide => write!(f, "/"),
+            GrammarItem::Greater => write!(f, ">"),
+            GrammarItem::GreaterEqual => write!(f, ">="),
+            GrammarItem::Less => write!(f, "<"),
+            GrammarItem::LessEqual => write!(f, "<="),
+            GrammarItem::Eq => write!(f, "=="),
+            GrammarItem::NotEq => write!(f, "!="),
+            GrammarItem::Not => write!(f, "!"),
             GrammarItem::Root => write!(f, "."),
+            GrammarItem::Tuple => write!(f, "tuple"),
+            
+            GrammarItem::And => write!(f, "and"),
+            GrammarItem::Or => write!(f, "or"),
+            
+            GrammarItem::Let => write!(f, "let"),
+            GrammarItem::Fn => write!(f, "fn"),
+            GrammarItem::If => write!(f, "if"),
         }
     }
 }
@@ -55,11 +98,3 @@ pub fn print_tree_helper(root: &Node, level: usize) {
         print_tree_helper(&ch, level + 1);
     }
 }
-
-
-
-
-
-
-
-
