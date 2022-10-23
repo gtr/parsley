@@ -7,77 +7,174 @@ language, [Ivy](https://github.com/gtr/ivy).
 ```html
 <statement> ::= <expression> ';' ;
 
-<expresion> ::= <letExpr> 
-              | <funcExpr>
-              | <ifExpr>
-              | <or> ;
+<expression> ::= <letExpr>      [ ]
+               | <mutExpr>      [ ]
+               | <fnExpr>       [x]
+               | <ifExpr>       [x]
+               | <pubExpr>      [x]
+               | <dataExpr>     [x]
+               | <structStmt>   [ ]
+               | <packageStmt>  [x]
+               | <importStmt>   [x]
+               | <matchExpr>    [x]
+               | <whileExpr>    [x]
+               | <doExpr>       [x]
+               | <returnExpr>   [x]
+               | <or>           [ ]
+               | <tupleAny> ;   [x]
 
-<letExpr>   ::= 'let' [ <symbol> | <tupleExpr> ] '=' <expression> ;
-<funcExpr>  ::= 'fn' <tupleExpr> '->' <expression> ;
-<ifExpr>    ::= 'if' '(' <or> ')' 'then' <expression> [ 'else' <expression> ]? ;
+<letExpr>       ::= 'let'['mut']? [<symbol>|<tupleSymbols>] ['::'<typeFn>]?'='<expression>;
+<mutExpr>       ::= 'mut' [ <symbol> | <access> ] '=' <expression> ;
+<fnExpr>        ::= <fnAnon> | <fnSignature> | <fnDeclaration> ;
+<ifExpr>        ::= 'if' <expression> 'then' <expression> [ 'else' <expression> ]? ;
+<pubExpr>       ::= 'pub' [ <fnSignature> | <fnDeclaration> | <typeExpr> | <structStmt> ] ;
+<dataExpr>      ::= 'data' <symbol> [ <dataGenerics> ]? '(' <dataVariants> ')' ;
+<structStmt>    ::= <structAnon> | <structDeclaration> ;
+<packageStmt>   ::= 'package' <symbol> ;
+<importStmt>    ::= 'import' [ <string> | <tupleStrings> ] ;
+<matchExpr>     ::= 'match' <or> 'with' '(' [ <matchBranch> ]* ')' ;
+<whileExpr>     ::= 'while' <or> '{' [ <statement> ]* '}' ;
+<doExpr>        ::= 'do' '{' [ <statement> ]* '}' ;
+<returnExpr>    ::= 'return' <expression> ;
 
-<tupleExpr> ::= '(' [ <commas> ]? ')' ;
-<commas>    ::= <atom> [ ',' <atom> ]* ;
+<!-- [x] Functions -->
+<fnAnon>        ::= 'fn' <fnArgs> [ ':' <typeFn> ]? '=>' <expression> ;
+<fnSignature>   ::= 'fn' <symbol> '::' <typeFn> ;
+<fnDeclaration> ::= 'fn' <symbol> <fnArgs> [ ':' <typeFn> ]? '=>' <expression> ;
 
+<!-- [ ] Function Arguments -->
+<fnArgs>        ::= '(' [ <fnArgsTyped> [ ',' <fnArgsTyped> ]* ]? ')' ;
+<fnArgsTyped>   ::= <symbol> [ ':' <typeFn> ] ? ;
+
+<!-- [x] Data Type Branches -->
+<dataGenerics>  ::= '<' <symbol> [',' <symbol> ]* '>' ; ;
+<dataVariants>  ::= [ '|' ]? <dataItem> [ '|' <dataItem> ]* ;
+<dataItem>      ::= <symbol> [ '::' <typeFn> ]? ;
+
+<!-- [ ] Structs -->
+<structAnon>        ::= 'struct'          '(' <structFields> ')' ;
+<structDeclaration> ::= 'struct' <symbol> '(' <structFields> ')' ;
+<structFields>      ::= <structField> [ ',' <structField> ]* [ ',' ]? ;
+<structField>       ::= <symbol> '::' <typeFn> ;
+    
+<!-- [x] Match Branches -->
+<matchBranch>   ::= '|' <expression> '->' <expression>
+
+<!-- [x] Type Literals -->
+<typeFn>    ::= <typeCmpst> [ '->' <typeCmpst> ]? ;
+<typeCmpst> ::= <typeLst> | <symbol> '<' [ <typeLst> [ ',' <typeLst> ]* ] '>' ;
+<typeLst>   ::= <typeTuple> | '[' <typeFn> ']' ;
+<typeTuple> ::= <type> | '(' <typeFn> [ ',' <typeFn> ]* ')' ;
+<type>      ::= [ 'mut' ]? <symbol>  ;
+
+<!-- [x] Binary & Unary Expressions, Operator Precedence -->
 <or>            ::= <and> [ '||' <and> ]* ;
 <and>           ::= <equality> [ '&&' <equality> ]* ;
-<equality>      ::= <comparison> [ [ '==' | '!=' ] <comparison> ]* ;
-<comparison>    ::= <addition> [ [ '>' | '>=' | '<' | '<=' ] <addition> ]* ;
-<addition>      ::= <mult> [ ( '+' | '-' ) <mult> ]* ;
-<mult>          ::= <unary> [ ( '*' | '/' ) <unary> ]* ;
-<unary>         ::= [ '!' | '-' | '++' | '--' ] <call> | <call> ;
-<call>          ::= <factor> <tupleExpr> | <factor> ;
-<factor>        ::= '(' <or> ')' | <atom> ;
+<equality>      ::= <comparison> [ ( '==' | '!=' ) <comparison> ]* ;
+<comparison>    ::= <addition> [ ( '>' | '>=' | '<' | '<=' ) <addition> ]* ;
+<addition>      ::= <mult> [ ( '+' | '-' )  <mult> ]* ;
+<mult>          ::= <unary>  [ ( '*' | '/' ) <unary> ]* ;
+<unary>         ::= ( '!' | '-' ) <callExpr> | <callExpr> ;
 
-<atom> ::= <integer>
-         | <symbol> 
-         | <boolean> ;
+<!-- [ ] Call & Access Expressions -->
+<callExpr>      ::= <accessAttr> | <accessAttr> <tuple> ;
+<accessAttr>    ::= <accessIndx> [ '.' <callExpr> ]* ;
+<accessIndx>    ::= <factor> [ '[' <or> ']' ]* ;
+
+<!-- [x] Factors & tuples -->
+<factor>    ::= '(' [ <or> ]? ')' 
+              | <tuple> 
+              | <listExpr> 
+              | <atom> ;
+<tuple>     ::= '(' <expression> [ ',' <expression> ]* ')' ;
+
+<!-- [x] List Literals -->
+<listExpr>      ::= <listSplit> | <listLiteral> ;
+<listLiteral>   ::= '[' [ <listItems> ]? ']' ;
+<listSplit>     ::= '[' <symbol> '|' <symbol> ']' ;
+<listItems>     ::= <expression> [ ',' <expression> ]* ;
+
+<!-- [x] Tuples -->
+<tupleAny>      ::= '(' <expression> [ ','  <expression> ]* ')' ;
+<tupleSymbols>  ::= '(' <symbol> [ ',' <symbol> ]* [ ',' ]? ')' ;
+<tupleStrings>  ::= '(' <string> [ ',' <string> ]* [ ',' ]? ')' ;
+    
+<!-- [x] Atoms -->
+<atom>  ::= <integer>
+          | <symbol> 
+          | <string> ;
 ```
 
-### example
+## Example
 
-The following code
+The following Ivy code: 
+
+```haskell
+fn factorial :: Int -> Int;
+fn factorial (0) => 1;
+fn factorial (n) => n * factorial(n - 1);
+```
+
+Is equivalent to the following vector of tokens:
 ```rust
-// let add = fn(a, b) -> a + b;
-fn test_6() -> Vec<Token> {
-    vec![
-        Token::Let,        
-        Token::Symbol("add".to_string()),
-        Token::Bind,
-        Token::Fn,
-        Token::LeftParen,
-        Token::Symbol("a".to_string()),
-        Token::Comma,
-        Token::Symbol("b".to_string()),
-        Token::RightParen,
-        Token::Arrow,    
-        Token::Symbol("a".to_string()),
-        Token::Plus,
-        Token::Symbol("b".to_string()),
-        Token::Semicolon,
-    ]
-}
+// fn factorial :: Int -> Int;
+new_token(TokenType::Fn),
+new_token(TokenType::Symbol(format!("factorial"))),
+new_token(TokenType::DoubleColon),
+new_token(TokenType::Symbol(format!("Int"))),
+new_token(TokenType::Arrow),
+new_token(TokenType::Symbol(format!("Int"))),
+new_token(TokenType::Semicolon),
 
-fn main() {
-    let tokens = test_6();
+// fn factorial (0) => 1;
+new_token(TokenType::Fn),
+new_token(TokenType::Symbol(format!("factorial"))),
+new_token(TokenType::LParen),
+new_token(TokenType::Integer(0)),
+new_token(TokenType::RParen),
+new_token(TokenType::EqArrow),
+new_token(TokenType::Integer(1)),
+new_token(TokenType::Semicolon),
 
-    let mut p = Parser::new(tokens);
-    let root = p.parse().unwrap();
-
-    print_tree(&root);
-}
+// fn factorial (n) => n * factorial(n - 1);
+new_token(TokenType::Fn),
+new_token(TokenType::Symbol(format!("factorial"))),
+new_token(TokenType::LParen),
+new_token(TokenType::Symbol(format!("n"))),
+new_token(TokenType::RParen),
+new_token(TokenType::EqArrow),
+new_token(TokenType::Symbol(format!("n"))),
+new_token(TokenType::Star),
+new_token(TokenType::Symbol(format!("factorial"))),
+new_token(TokenType::LParen),
+new_token(TokenType::Symbol(format!("n"))),
+new_token(TokenType::Minus),
+new_token(TokenType::Integer(1)),
+new_token(TokenType::RParen),
+new_token(TokenType::Semicolon),
 ```
 
-produces:
-```
-1: let
-2:   Symbol: add
-2:   fn
-3:     tuple
-4:       Symbol: a
-4:       Symbol: b
-3:     +
-4:       Symbol: a
-4:       Symbol: b
-```
+And results in the following syntax tree:
 
+```
+[root]
+  0: [fn signature]
+    name: [Symbol 'factorial']
+    type: [->]
+      lhs: [Symbol 'Int']
+      rhs: [Symbol 'Int']
+  1: [fn declaration]
+    name: [Symbol 'factorial']
+    args: [Int '0']
+    value: [Int '1']
+  2: [fn declaration]
+    name: [Symbol 'factorial']
+    args: [Symbol 'n']
+    value: [*]
+      lhs: [Symbol 'n']
+      rhs: [call]
+        lhs: [Symbol 'factorial']
+        arg: [-]
+            lhs: [Symbol 'n']
+            rhs: [Int '1']
+```
